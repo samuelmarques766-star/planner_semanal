@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Planner Semanal – HLF</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#F0F4FA;min-height:100vh;padding-bottom:48px;}
+button{cursor:pointer;font-family:inherit;}
+input,select,textarea{font-family:inherit;}
+/* header */
+.hdr{background:linear-gradient(135deg,#1B4F8A 0%,#2563EB 100%);padding:18px 24px 0;box-shadow:0 2px 12px #1B4F8A44;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;flex-wrap:wrap;gap:8px;}
+.hdr-sub{color:#A8C4F0;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+.hdr-title{color:#fff;font-size:22px;font-weight:700;margin-top:2px;}
+.hdr-stat{background:rgba(255,255,255,.15);border-radius:10px;padding:6px 14px;text-align:center;}
+.hdr-stat-lbl{color:#A8C4F0;font-size:10px;font-weight:600;letter-spacing:1px;}
+.hdr-stat-val{color:#fff;font-weight:700;font-size:16px;}
+.hdr-stat-sub{color:#A8C4F0;font-size:10px;}
+.hdr-date{color:#A8C4F0;font-size:12px;text-align:right;}
+.hdr-date b{color:#fff;display:block;font-weight:600;}
+/* day tabs */
+.day-tabs{display:flex;gap:4px;max-width:1200px;margin:14px auto 0;overflow-x:auto;}
+.day-tab{flex:1 1 0;min-width:72px;padding:10px 8px 8px;border:none;border-radius:8px 8px 0 0;background:rgba(255,255,255,.12);color:#D0E4FF;font-weight:500;font-size:13px;position:relative;transition:all .15s;}
+.day-tab.active{background:#fff;color:#1B4F8A;font-weight:700;}
+.day-tab .badge-red{position:absolute;top:5px;right:5px;background:#E53E3E;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.day-tab .dot-orange{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:#E87722;}
+/* main */
+.main{max-width:1200px;margin:0 auto;padding:0 16px;}
+/* section tabs */
+.sec-tabs{display:flex;gap:8px;padding:16px 0 4px;border-bottom:2px solid #D1DCF0;margin-bottom:16px;flex-wrap:wrap;}
+.sec-tab{padding:6px 16px;border:none;border-radius:20px;font-weight:600;font-size:13px;background:#E2EAF6;color:#4A6FA5;transition:all .15s;}
+.sec-tab.active{background:#1B4F8A;color:#fff;}
+/* panels */
+.panel{display:none;} .panel.active{display:block;}
+/* cards */
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 8px #1B4F8A18;padding:16px;margin-bottom:16px;}
+/* agenda */
+.ag-grid{background:#fff;border-radius:12px;box-shadow:0 1px 8px #1B4F8A18;overflow:hidden;}
+.ag-head{display:grid;grid-template-columns:64px 1fr;border-bottom:1px solid #E8EEF8;}
+.ag-head-time{padding:10px 0;text-align:center;background:#F5F8FD;border-right:1px solid #E8EEF8;color:#6B84B0;font-size:11px;font-weight:700;letter-spacing:1px;}
+.ag-head-label{padding:10px 16px;background:#F5F8FD;color:#1B4F8A;font-size:12px;font-weight:700;}
+.ag-row{display:grid;grid-template-columns:64px 1fr;min-height:48px;}
+.ag-row.half{background:#FAFBFE;}
+.ag-row:not(:last-child){border-bottom:1px solid #D8E3F0;}
+.ag-row.half:not(:last-child){border-bottom-color:#EEF2FA;}
+.ag-time{padding:0 8px;display:flex;align-items:center;justify-content:center;border-right:1px solid #E8EEF8;font-size:12px;font-weight:700;color:#1B4F8A;}
+.ag-row.half .ag-time{font-weight:400;color:#94A8CC;}
+.ag-cell{padding:6px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;}
+.mtg-chip{border-radius:6px;padding:4px 10px;font-size:12px;color:#2D3748;display:flex;align-items:center;gap:6px;cursor:pointer;max-width:300px;}
+.mtg-chip .del{background:none;border:none;color:#FC8181;font-size:14px;line-height:1;padding:2px;}
+.add-mtg{background:none;border:1px dashed #94A8CC;border-radius:6px;padding:3px 10px;font-size:11px;color:#94A8CC;}
+/* tasks stats strip */
+.stat-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.stat-box{border-radius:10px;padding:8px 14px;min-width:70px;text-align:center;}
+.stat-box .sv{font-size:20px;font-weight:800;}
+.stat-box .sl{font-size:10px;font-weight:600;}
+.prod-box{border-radius:10px;padding:8px 14px;min-width:110px;background:#F0FFF4;}
+.prod-bar-bg{background:#CBD5E0;border-radius:20px;height:8px;overflow:hidden;margin-bottom:4px;}
+.prod-bar{height:100%;border-radius:20px;transition:width .4s;}
+.prod-pct{font-size:16px;font-weight:800;}
+/* task items */
+.task-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border-left:4px solid;transition:all .15s;flex-wrap:wrap;margin-bottom:8px;}
+.task-item .ti-title{flex:1;min-width:120px;font-size:13px;color:#2D3748;font-weight:500;}
+.task-item.done-item .ti-title{text-decoration:line-through;}
+.task-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+.prio-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;}
+/* inline edit */
+.edit-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.edit-row input,.edit-row select{padding:6px 10px;border:1px solid #D1DCF0;border-radius:7px;font-size:13px;outline:none;}
+.edit-row .btn-save{background:#1B4F8A;color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;}
+.edit-row .btn-cancel{background:#EDF2F7;color:#4A5568;border:none;border-radius:7px;padding:6px 12px;font-size:12px;}
+/* forms */
+.form-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.form-row input,.form-row select,.form-row textarea{padding:8px 12px;border:1px solid #D1DCF0;border-radius:8px;font-size:13px;color:#2D3748;outline:none;}
+.form-row input[type=text],.form-row textarea{flex:2;min-width:160px;}
+.form-row .btn-main{background:#1B4F8A;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:600;font-size:13px;}
+.form-row .btn-orange{background:#E87722;color:#fff;border:none;border-radius:8px;padding:7px 18px;font-weight:600;font-size:13px;margin-left:auto;}
+/* legend */
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.legend span{padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;}
+/* post-its */
+.postit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;}
+.postit{border-radius:8px;padding:16px;box-shadow:2px 4px 12px rgba(0,0,0,.10);position:relative;min-height:90px;word-break:break-word;font-size:13px;color:#2D3748;transform:rotate(-1deg);transition:transform .2s;}
+.postit:hover{transform:rotate(0) scale(1.02);}
+.postit .del-pi{position:absolute;top:6px;right:8px;background:none;border:none;color:rgba(0,0,0,.35);font-size:16px;}
+/* color dots */
+.color-dots{display:flex;gap:8px;align-items:center;margin-top:10px;}
+.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border .1s;}
+.color-dot.sel{border-color:#1B4F8A;}
+/* productivity */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-day{border-radius:8px;padding:6px 4px;text-align:center;min-height:52px;font-size:11px;position:relative;}
+.cal-day .cd-num{font-weight:500;color:#4A5568;margin-bottom:2px;}
+.cal-day.today .cd-num{font-weight:800;color:#1B4F8A;}
+.cal-day.today{border:2px solid #1B4F8A!important;}
+.cal-day .cd-pct{font-size:13px;font-weight:800;}
+.cal-day .cd-sub{font-size:9px;color:#6B84B0;}
+.cal-week-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;}
+.cal-week-hdr span{text-align:center;font-size:11px;font-weight:700;color:#6B84B0;padding:4px 0;}
+table.dt{width:100%;border-collapse:collapse;font-size:13px;}
+table.dt th{padding:8px 12px;text-align:left;color:#6B84B0;font-weight:700;font-size:11px;background:#F5F8FD;white-space:nowrap;}
+table.dt td{padding:8px 12px;border-top:1px solid #EDF2F7;}
+.mini-bar-bg{flex:1;height:8px;background:#EDF2F7;border-radius:20px;overflow:hidden;min-width:50px;}
+.mini-bar{height:100%;border-radius:20px;}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal-box{background:#fff;border-radius:16px;padding:28px;width:420px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,.22);}
+.modal-box input,.modal-box select,.modal-box textarea{width:100%;padding:9px 12px;border:1px solid #D1DCF0;border-radius:8px;font-size:13px;color:#2D3748;outline:none;margin-bottom:10px;}
+.modal-box .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
+.modal-box .btn-cancel{padding:8px 18px;border-radius:8px;border:1px solid #D1DCF0;background:#fff;color:#6B84B0;font-weight:600;font-size:13px;}
+.modal-box .btn-save{padding:8px 20px;border-radius:8px;border:none;background:#1B4F8A;color:#fff;font-weight:700;font-size:13px;}
+.empty{text-align:center;color:#94A8CC;padding:32px;font-size:14px;}
+@media(max-width:600px){
+  .hdr-top{flex-direction:column;}.day-tab{min-width:60px;font-size:12px;}
+  .ag-time{font-size:11px;}.mtg-chip{max-width:220px;}
+  .form-row input[type=text]{min-width:120px;}
+  .modal-box{padding:18px;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="hdr-sub">Hospital Luís França · HLF</div>
+      <div class="hdr-title">📋 Planner Semanal</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="hdr-stat" id="hdr-stat" style="display:none;">
+        <div class="hdr-stat-lbl">HOJE</div>
+        <div class="hdr-stat-val" id="hdr-stat-pct">—</div>
+        <div class="hdr-stat-sub" id="hdr-stat-sub"></div>
+      </div>
+      <div class="hdr-date">
+        <span>Semana atual</span>
+        <b id="hdr-date-str"></b>
+      </div>
+    </div>
+  </div>
+  <div class="day-tabs" id="day-tabs"></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="sec-tabs" id="sec-tabs"></div>
+
+  <!-- AGENDA -->
+  <div class="panel active" id="panel-agenda">
+    <div class="ag-grid">
+      <div class="ag-head"><div class="ag-head-time">HORA</div><div class="ag-head-label">REUNIÕES / COMPROMISSOS</div></div>
+      <div id="ag-body"></div>
+    </div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="panel" id="panel-tasks">
+    <div id="tasks-stats-strip" class="stat-strip"></div>
+    <div class="card">
+      <div style="font-weight:700;color:#1B4F8A;margin-bottom:12px;font-size:14px;">+ Nova Atividade</div>
+      <div class="form-row">
+        <input type="text" id="task-title" placeholder="Descreva a atividade…"/>
+        <input type="date" id="task-due" title="Data de realização"/>
+        <select id="task-prio"></select>
+        <button class="btn-main" onclick="addTask()">Adicionar</button>
+      </div>
+    </div>
+    <div class="legend" id="task-legend"></div>
+    <div id="task-list"></div>
+  </div>
+
+  <!-- PRODUCTIVITY -->
+  <div class="panel" id="panel-productivity">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+      <button onclick="changeMonth(-1)" style="background:#E2EAF6;border:none;border-radius:8px;padding:6px 14px;font-weight:700;font-size:16px;color:#1B4F8A;">‹</button>
+      <span id="prod-month-label" style="font-weight:700;color:#1B4F8A;font-size:18px;min-width:180px;text-align:center;"></span>
+      <button onclick="changeMonth(1)"  style="background:#E2EAF6;border:none;border-radius:8px;padding:6px 14px;font-weight:700;font-size:16px;color:#1B4F8A;">›</button>
+    </div>
+    <div class="card" id="prod-month-card"></div>
+    <div class="card" id="prod-cal-card"></div>
+    <div class="card" id="prod-table-card" style="display:none;"></div>
+  </div>
+
+  <!-- POSTITS -->
+  <div class="panel" id="panel-postits">
+    <div class="card">
+      <div style="font-weight:700;color:#1B4F8A;margin-bottom:12px;font-size:14px;">+ Novo Post-it</div>
+      <textarea id="pi-text" rows="3" placeholder="Escreva sua nota…" style="width:100%;padding:8px 12px;border:1px solid #D1DCF0;border-radius:8px;font-size:13px;color:#2D3748;resize:vertical;"></textarea>
+      <div class="color-dots" id="pi-colors"></div>
+    </div>
+    <div class="postit-grid" id="postit-grid"></div>
+  </div>
+
+  <!-- REMINDERS -->
+  <div class="panel" id="panel-reminders">
+    <div class="card">
+      <div style="font-weight:700;color:#1B4F8A;margin-bottom:12px;font-size:14px;">+ Novo Lembrete</div>
+      <div class="form-row">
+        <input type="text" id="rem-text" placeholder="Lembrete…"/>
+        <input type="date" id="rem-date"/>
+        <select id="rem-prio"></select>
+        <button class="btn-main" onclick="addReminder()">Adicionar</button>
+      </div>
+    </div>
+    <div id="rem-list"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal-overlay" style="display:none;" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div id="modal-title" style="font-weight:700;color:#1B4F8A;font-size:16px;margin-bottom:16px;"></div>
+    <input type="text" id="modal-mtg-title" placeholder="Título da reunião…"/>
+    <select id="modal-mtg-prio"></select>
+    <textarea id="modal-mtg-notes" rows="3" placeholder="Observações (opcional)…"></textarea>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" id="modal-btn-save" onclick="saveModal()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+const DAYS_PT  = ["Segunda","Terça","Quarta","Quinta","Sexta"];
+const DAY_KEYS = ["seg","ter","qua","qui","sex"];
+const MONTHS_PT= ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const PRIORITIES = [
+  {id:"urgent",label:"🔴 Urgente",   color:"#E53E3E",bg:"#FFF5F5",border:"#FC8181"},
+  {id:"high",  label:"🟠 Alta",      color:"#DD6B20",bg:"#FFFAF0",border:"#F6AD55"},
+  {id:"medium",label:"🟡 Média",     color:"#D69E2E",bg:"#FFFFF0",border:"#F6E05E"},
+  {id:"low",   label:"🟢 Baixa",     color:"#38A169",bg:"#F0FFF4",border:"#68D391"},
+  {id:"info",  label:"🔵 Informativo",color:"#3182CE",bg:"#EBF8FF",border:"#63B3ED"},
+];
+const PMAP = Object.fromEntries(PRIORITIES.map(p=>[p.id,p]));
+const STATUS_STYLE = {
+  done:   {bg:"#F0FFF4",border:"#68D391",badge:"✅ Concluída",  bc:"#38A169",bbg:"#C6F6D5"},
+  overdue:{bg:"#FFF5F5",border:"#FC8181",badge:"⚠️ Em Atraso", bc:"#E53E3E",bbg:"#FED7D7"},
+  near:   {bg:"#FFFAF0",border:"#F6AD55",badge:"🔔 Próximo",    bc:"#DD6B20",bbg:"#FEEBC8"},
+  ok:     {bg:"#EBF8FF",border:"#63B3ED",badge:"📅 No Prazo",   bc:"#3182CE",bbg:"#BEE3F8"},
+  nodate: {bg:"#F7FAFC",border:"#CBD5E0",badge:"— Sem prazo",  bc:"#718096",bbg:"#EDF2F7"},
+};
+const POSTIT_COLORS=["#FEF9C3","#D1FAE5","#DBEAFE","#FCE7F3","#FEE2E2","#EDE9FE"];
+const TIME_SLOTS=(()=>{const s=[];for(let h=8;h<17;h++){s.push(`${String(h).padStart(2,"0")}:00`);s.push(`${String(h).padStart(2,"0")}:30`);}s.push("17:00");return s;})();
+
+function uid(){return Math.random().toString(36).slice(2,9);}
+function todayISO(){return new Date().toISOString().slice(0,10);}
+function todayKey(){const d=new Date();return DAY_KEYS[d.getDay()-1]??"seg";}
+
+// ── STORAGE ───────────────────────────────────────────────────────────────
+const SK={week:"planner_week",misc:"planner_misc",all:"planner_alltasks"};
+function ls_load(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}}
+function ls_save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+
+function emptyWeek(){
+  const w={};
+  DAY_KEYS.forEach(d=>{w[d]={meetings:{},tasks:[]};TIME_SLOTS.forEach(t=>{w[d].meetings[t]=[];});});
+  return w;
+}
+function emptyMisc(){return{postits:[],reminders:[]};}
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let week, misc, allTasks;
+let activeDay = todayKey();
+let activeTab = "agenda";
+let selectedPiColor = POSTIT_COLORS[0];
+let modalCtx = null; // {mode:"add"|"edit", day, time, meetingId?}
+let prodYear = new Date().getFullYear();
+let prodMonth = new Date().getMonth();
+
+function init(){
+  week = ls_load(SK.week) ?? emptyWeek();
+  misc = ls_load(SK.misc) ?? emptyMisc();
+  allTasks = ls_load(SK.all) ?? {};
+  // compat
+  DAY_KEYS.forEach(d=>{
+    if(!week[d]) week[d]={meetings:{},tasks:[]};
+    TIME_SLOTS.forEach(t=>{if(!week[d].meetings[t]) week[d].meetings[t]=[];});
+    if(!week[d].tasks) week[d].tasks=[];
+  });
+  buildHeader();
+  buildDayTabs();
+  buildSecTabs();
+  buildPrioSelects();
+  buildPiColors();
+  renderAll();
+}
+
+// ── PERSIST ───────────────────────────────────────────────────────────────
+function persist(){ls_save(SK.week,week);ls_save(SK.misc,misc);ls_save(SK.all,allTasks);}
+
+// ── TASK STATUS ───────────────────────────────────────────────────────────
+function taskStatus(t){
+  if(t.done) return "done";
+  if(!t.dueDate) return "nodate";
+  const today=new Date();today.setHours(0,0,0,0);
+  const due=new Date(t.dueDate+"T12:00:00");
+  const diff=Math.ceil((due-today)/86400000);
+  if(diff<0) return "overdue";
+  if(diff<=2) return "near";
+  return "ok";
+}
+
+// ── PRODUCTIVITY HELPERS ──────────────────────────────────────────────────
+function statsForDate(iso){
+  const tasks=allTasks[iso]||[];
+  const total=tasks.length,done=tasks.filter(t=>t.done).length;
+  return{total,done,pct:total?Math.round(done/total*100):null};
+}
+function statsForMonth(y,m){
+  let total=0,done=0;
+  Object.entries(allTasks).forEach(([iso,tasks])=>{
+    const d=new Date(iso+"T12:00:00");
+    if(d.getFullYear()===y&&d.getMonth()===m){total+=tasks.length;done+=tasks.filter(t=>t.done).length;}
+  });
+  return{total,done,pct:total?Math.round(done/total*100):null};
+}
+function pctColor(pct){if(pct===null)return"#CBD5E0";if(pct>=80)return"#38A169";if(pct>=50)return"#D69E2E";return"#E53E3E";}
+function pctBg(pct){if(pct===null)return"#EDF2F7";if(pct>=80)return"#C6F6D5";if(pct>=50)return"#FEFCBF";return"#FED7D7";}
+
+// ── BUILD STATIC CHROME ───────────────────────────────────────────────────
+function buildHeader(){
+  document.getElementById("hdr-date-str").textContent=
+    new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+}
+function buildDayTabs(){
+  const el=document.getElementById("day-tabs"); el.innerHTML="";
+  DAY_KEYS.forEach((dk,i)=>{
+    const btn=document.createElement("button");
+    btn.className="day-tab"+(dk===activeDay?" active":"");
+    btn.textContent=DAYS_PT[i];
+    btn.onclick=()=>{activeDay=dk;renderAll();document.querySelectorAll(".day-tab").forEach(b=>b.classList.remove("active"));btn.classList.add("active");};
+    // badge
+    const ov=week[dk].tasks.filter(t=>taskStatus(t)==="overdue").length;
+    const hasMtg=Object.values(week[dk].meetings).some(a=>a.length>0);
+    if(ov>0){const b=document.createElement("span");b.className="badge-red";b.textContent=ov;btn.appendChild(b);}
+    else if(hasMtg){const b=document.createElement("span");b.className="dot-orange";btn.appendChild(b);}
+    el.appendChild(btn);
+  });
+}
+function buildSecTabs(){
+  const tabs=[["agenda","🗓 Agenda"],["tasks","✅ Atividades"],["productivity","📊 Produtividade"],["postits","📌 Post-its"],["reminders","🔔 Lembretes"]];
+  const el=document.getElementById("sec-tabs"); el.innerHTML="";
+  tabs.forEach(([k,l])=>{
+    const btn=document.createElement("button");
+    btn.className="sec-tab"+(k===activeTab?" active":"");
+    btn.textContent=l;
+    btn.onclick=()=>{
+      activeTab=k;
+      document.querySelectorAll(".sec-tab").forEach(b=>b.classList.remove("active"));btn.classList.add("active");
+      document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+      document.getElementById("panel-"+k).classList.add("active");
+      if(k==="productivity") renderProductivity();
+    };
+    el.appendChild(btn);
+  });
+}
+function buildPrioSelects(){
+  ["task-prio","rem-prio","modal-mtg-prio"].forEach(id=>{
+    const sel=document.getElementById(id); if(!sel) return;
+    PRIORITIES.forEach(p=>{const o=document.createElement("option");o.value=p.id;o.textContent=p.label;sel.appendChild(o);});
+    sel.value="medium";
+  });
+}
+function buildPiColors(){
+  const el=document.getElementById("pi-colors");
+  const lbl=document.createElement("span");lbl.style.cssText="font-size:12px;color:#6B84B0;font-weight:600;";lbl.textContent="Cor:";
+  el.appendChild(lbl);
+  POSTIT_COLORS.forEach(c=>{
+    const d=document.createElement("div");
+    d.className="color-dot"+(c===selectedPiColor?" sel":"");
+    d.style.background=c;
+    d.onclick=()=>{selectedPiColor=c;document.querySelectorAll(".color-dot").forEach(x=>x.classList.remove("sel"));d.classList.add("sel");document.getElementById("pi-text").style.background=c;};
+    el.appendChild(d);
+  });
+  const btn=document.createElement("button");
+  btn.style.cssText="margin-left:auto;background:#E87722;color:#fff;border:none;border-radius:8px;padding:7px 18px;font-weight:600;font-size:13px;";
+  btn.textContent="Fixar"; btn.onclick=addPostit;
+  el.appendChild(btn);
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────────────
+function renderAll(){
+  buildDayTabs();
+  renderAgenda();
+  renderTasks();
+  renderPostits();
+  renderReminders();
+  renderHeaderStat();
+  if(activeTab==="productivity") renderProductivity();
+}
+
+function renderHeaderStat(){
+  const s=statsForDate(todayISO());
+  const el=document.getElementById("hdr-stat");
+  if(s.total>0){
+    el.style.display="block";
+    document.getElementById("hdr-stat-pct").textContent=s.pct+"%";
+    document.getElementById("hdr-stat-sub").textContent=s.done+"/"+s.total+" tarefas";
+  } else el.style.display="none";
+}
+
+// ── AGENDA ────────────────────────────────────────────────────────────────
+function renderAgenda(){
+  const body=document.getElementById("ag-body"); body.innerHTML="";
+  const dayMtgs=week[activeDay].meetings;
+  TIME_SLOTS.forEach((slot,idx)=>{
+    const row=document.createElement("div");
+    row.className="ag-row"+(slot.endsWith(":30")?" half":"");
+    if(idx<TIME_SLOTS.length-1) row.style.borderBottom="1px solid "+(slot.endsWith(":30")?"#EEF2FA":"#D8E3F0");
+
+    const timeEl=document.createElement("div"); timeEl.className="ag-time"; timeEl.textContent=slot;
+    const cell=document.createElement("div"); cell.className="ag-cell";
+
+    (dayMtgs[slot]||[]).forEach(m=>{
+      const p=PMAP[m.priority]||PMAP.info;
+      const chip=document.createElement("div");
+      chip.className="mtg-chip";
+      chip.style.cssText=`background:${p.bg};border:1px solid ${p.border};border-left:3px solid ${p.color};`;
+      chip.innerHTML=`<span style="font-size:11px;color:${p.color};font-weight:700;">${p.label.split(" ")[0]}</span><span style="flex:1;font-weight:600;">${esc(m.title)}</span>`;
+      chip.onclick=()=>openModal("edit",activeDay,slot,m.id);
+      const del=document.createElement("button");del.className="del";del.textContent="×";del.onclick=e=>{e.stopPropagation();delMeeting(activeDay,slot,m.id);};
+      chip.appendChild(del); cell.appendChild(chip);
+    });
+    const addBtn=document.createElement("button");addBtn.className="add-mtg";addBtn.textContent="+ adicionar";addBtn.onclick=()=>openModal("add",activeDay,slot);
+    cell.appendChild(addBtn);
+    row.appendChild(timeEl); row.appendChild(cell);
+    body.appendChild(row);
+  });
+}
+
+// ── MEETINGS ──────────────────────────────────────────────────────────────
+function openModal(mode,day,time,meetingId){
+  modalCtx={mode,day,time,meetingId};
+  const isEdit=mode==="edit";
+  document.getElementById("modal-title").textContent=(isEdit?"✏️ Editar Reunião":"➕ Nova Reunião")+" — "+time;
+  document.getElementById("modal-btn-save").textContent=isEdit?"Salvar":"Adicionar";
+  if(isEdit){
+    const m=(week[day].meetings[time]||[]).find(x=>x.id===meetingId)||{};
+    document.getElementById("modal-mtg-title").value=m.title||"";
+    document.getElementById("modal-mtg-prio").value=m.priority||"medium";
+    document.getElementById("modal-mtg-notes").value=m.notes||"";
+  } else {
+    document.getElementById("modal-mtg-title").value="";
+    document.getElementById("modal-mtg-prio").value="medium";
+    document.getElementById("modal-mtg-notes").value="";
+  }
+  document.getElementById("modal-overlay").style.display="flex";
+}
+function closeModal(){document.getElementById("modal-overlay").style.display="none";modalCtx=null;}
+function saveModal(){
+  const title=document.getElementById("modal-mtg-title").value.trim();
+  if(!title||!modalCtx) return;
+  const priority=document.getElementById("modal-mtg-prio").value;
+  const notes=document.getElementById("modal-mtg-notes").value.trim();
+  const {mode,day,time,meetingId}=modalCtx;
+  if(mode==="add"){
+    week[day].meetings[time].push({id:uid(),title,priority,notes});
+  } else {
+    week[day].meetings[time]=week[day].meetings[time].map(m=>m.id===meetingId?{...m,title,priority,notes}:m);
+  }
+  persist(); closeModal(); renderAgenda(); buildDayTabs();
+}
+function delMeeting(day,time,id){
+  week[day].meetings[time]=week[day].meetings[time].filter(m=>m.id!==id);
+  persist(); renderAgenda(); buildDayTabs();
+}
+
+// ── TASKS ─────────────────────────────────────────────────────────────────
+function addTask(){
+  const title=document.getElementById("task-title").value.trim();
+  if(!title) return;
+  const priority=document.getElementById("task-prio").value;
+  const dueDate=document.getElementById("task-due").value;
+  const task={id:uid(),title,priority,dueDate,done:false};
+  week[activeDay].tasks.push(task);
+  if(dueDate){
+    if(!allTasks[dueDate]) allTasks[dueDate]=[];
+    allTasks[dueDate].push({...task,dayKey:activeDay});
+  }
+  persist();
+  document.getElementById("task-title").value="";
+  document.getElementById("task-due").value="";
+  renderTasks(); renderHeaderStat(); buildDayTabs();
+  if(activeTab==="productivity") renderProductivity();
+}
+function toggleTask(dayKey,id){
+  let due=null;
+  week[dayKey].tasks=week[dayKey].tasks.map(t=>{if(t.id===id){due=t.dueDate;return{...t,done:!t.done};}return t;});
+  if(due&&allTasks[due]) allTasks[due]=allTasks[due].map(t=>t.id===id?{...t,done:!t.done}:t);
+  persist(); renderTasks(); renderHeaderStat(); buildDayTabs();
+  if(activeTab==="productivity") renderProductivity();
+}
+function delTask(dayKey,id){
+  let due=null;
+  const t=week[dayKey].tasks.find(t=>t.id===id);if(t) due=t.dueDate;
+  week[dayKey].tasks=week[dayKey].tasks.filter(t=>t.id!==id);
+  if(due&&allTasks[due]) allTasks[due]=allTasks[due].filter(t=>t.id!==id);
+  persist(); renderTasks(); renderHeaderStat(); buildDayTabs();
+  if(activeTab==="productivity") renderProductivity();
+}
+function saveEditTask(dayKey,id){
+  const title=document.getElementById("etitle-"+id).value.trim(); if(!title) return;
+  const priority=document.getElementById("eprio-"+id).value;
+  const dueDate=document.getElementById("edue-"+id).value;
+  const old=week[dayKey].tasks.find(t=>t.id===id)||{};
+  // remove from old allTasks date
+  if(old.dueDate&&allTasks[old.dueDate]) allTasks[old.dueDate]=allTasks[old.dueDate].filter(t=>t.id!==id);
+  week[dayKey].tasks=week[dayKey].tasks.map(t=>t.id===id?{...t,title,priority,dueDate}:t);
+  if(dueDate){if(!allTasks[dueDate])allTasks[dueDate]=[];allTasks[dueDate].push({...old,title,priority,dueDate,dayKey});}
+  persist(); renderTasks(); renderHeaderStat(); buildDayTabs();
+  if(activeTab==="productivity") renderProductivity();
+}
+
+function renderTasks(){
+  // legend
+  const leg=document.getElementById("task-legend"); leg.innerHTML="";
+  Object.entries(STATUS_STYLE).filter(([k])=>k!=="nodate").forEach(([k,s])=>{
+    const sp=document.createElement("span");sp.style.cssText=`background:${s.bbg};color:${s.bc};`;sp.textContent=s.badge;leg.appendChild(sp);
+  });
+
+  // stats
+  const tasks=week[activeDay].tasks;
+  const total=tasks.length,done=tasks.filter(t=>t.done).length,pct=total?Math.round(done/total*100):null;
+  const overdue=tasks.filter(t=>taskStatus(t)==="overdue").length,near=tasks.filter(t=>taskStatus(t)==="near").length;
+  const strip=document.getElementById("tasks-stats-strip"); strip.innerHTML="";
+  if(total>0){
+    [{l:"Total",v:total,c:"#1B4F8A",bg:"#EBF4FF"},{l:"Concluídas",v:done,c:"#38A169",bg:"#C6F6D5"},{l:"Em aberto",v:total-done,c:"#DD6B20",bg:"#FEEBC8"},{l:"Em Atraso",v:overdue,c:"#E53E3E",bg:"#FED7D7"},{l:"Próximas",v:near,c:"#D69E2E",bg:"#FEFCBF"}].forEach(s=>{
+      const d=document.createElement("div");d.className="stat-box";d.style.cssText=`background:${s.bg};`;
+      d.innerHTML=`<div class="sv" style="color:${s.c};">${s.v}</div><div class="sl" style="color:${s.c};">${s.l}</div>`;
+      strip.appendChild(d);
+    });
+    if(pct!==null){
+      const pb=document.createElement("div");pb.className="prod-box";
+      const c=pctColor(pct);
+      pb.innerHTML=`<div style="font-size:10px;color:#38A169;font-weight:700;margin-bottom:4px;">PRODUTIVIDADE DO DIA</div>
+        <div class="prod-bar-bg"><div class="prod-bar" style="width:${pct}%;background:${c};"></div></div>
+        <div class="prod-pct" style="color:${c};">${pct}%</div>`;
+      strip.appendChild(pb);
+    }
+  }
+
+  // list
+  const list=document.getElementById("task-list"); list.innerHTML="";
+  if(tasks.length===0){list.innerHTML='<div class="empty">Nenhuma atividade para este dia.</div>';return;}
+
+  const sorted=[...tasks].sort((a,b)=>{
+    const so={overdue:0,near:1,ok:2,nodate:3,done:4};
+    const pr={urgent:0,high:1,medium:2,low:3,info:4};
+    const sa=so[taskStatus(a)]??5,sb=so[taskStatus(b)]??5;
+    if(sa!==sb) return sa-sb;
+    return (pr[a.priority]??5)-(pr[b.priority]??5);
+  });
+
+  sorted.forEach(t=>{
+    const p=PMAP[t.priority]||PMAP.info;
+    const st=taskStatus(t);
+    const ss=STATUS_STYLE[st];
+    const item=document.createElement("div");
+    item.className="task-item"+(t.done?" done-item":"");
+    item.id="task-item-"+t.id;
+    item.style.cssText=`background:${t.done?"#F7F9FC":ss.bg};border:1px solid ${t.done?"#D1DCF0":ss.border};border-left-color:${t.done?"#CBD5E0":p.color};opacity:${t.done?0.65:1};`;
+
+    // normal view
+    const dueTxt=t.dueDate?`<span style="font-size:11px;color:${st==="overdue"?"#E53E3E":st==="near"?"#DD6B20":"#6B84B0"};font-weight:600;">📅 ${new Date(t.dueDate+"T12:00:00").toLocaleDateString("pt-BR")}</span>`:"";
+    item.innerHTML=`
+      <input type="checkbox" ${t.done?"checked":""} style="width:16px;height:16px;cursor:pointer;accent-color:${p.color};flex-shrink:0;" onchange="toggleTask('${activeDay}','${t.id}')"/>
+      <span class="ti-title">${esc(t.title)}</span>
+      ${dueTxt}
+      <span class="task-badge" style="background:${ss.bbg};color:${ss.bc};">${ss.badge}</span>
+      <span class="prio-badge" style="background:${p.bg};border:1px solid ${p.border};color:${p.color};">${p.label}</span>
+      <button onclick="showEditTask('${activeDay}','${t.id}')" style="background:none;border:none;color:#63B3ED;font-size:14px;line-height:1;" title="Editar">✏️</button>
+      <button onclick="delTask('${activeDay}','${t.id}')" style="background:none;border:none;color:#FC8181;font-size:16px;line-height:1;">×</button>
+    `;
+    list.appendChild(item);
+  });
+}
+function showEditTask(dayKey,id){
+  const t=week[dayKey].tasks.find(t=>t.id===id); if(!t) return;
+  const item=document.getElementById("task-item-"+id); if(!item) return;
+  const prioOpts=PRIORITIES.map(p=>`<option value="${p.id}"${p.id===t.priority?" selected":""}>${p.label}</option>`).join("");
+  item.innerHTML=`<div class="edit-row" style="width:100%;">
+    <input id="etitle-${id}" type="text" value="${esc(t.title)}" style="flex:2;min-width:140px;"/>
+    <input id="edue-${id}" type="date" value="${t.dueDate||""}"/>
+    <select id="eprio-${id}">${prioOpts}</select>
+    <button class="btn-save" onclick="saveEditTask('${dayKey}','${id}')">Salvar</button>
+    <button class="btn-cancel" onclick="renderTasks()">Cancelar</button>
+  </div>`;
+}
+
+// ── POSTITS ───────────────────────────────────────────────────────────────
+function addPostit(){
+  const text=document.getElementById("pi-text").value.trim(); if(!text) return;
+  misc.postits.push({id:uid(),text,color:selectedPiColor});
+  persist(); document.getElementById("pi-text").value=""; renderPostits();
+}
+function delPostit(id){misc.postits=misc.postits.filter(p=>p.id!==id);persist();renderPostits();}
+function renderPostits(){
+  const grid=document.getElementById("postit-grid"); grid.innerHTML="";
+  if(!misc.postits.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1;">Nenhum post-it ainda.</div>';return;}
+  misc.postits.forEach(p=>{
+    const d=document.createElement("div"); d.className="postit"; d.style.background=p.color;
+    d.innerHTML=`<div style="white-space:pre-wrap;line-height:1.6;">${esc(p.text)}</div><button class="del-pi" onclick="delPostit('${p.id}')">×</button>`;
+    grid.appendChild(d);
+  });
+}
+
+// ── REMINDERS ─────────────────────────────────────────────────────────────
+function addReminder(){
+  const text=document.getElementById("rem-text").value.trim(); if(!text) return;
+  const date=document.getElementById("rem-date").value;
+  const priority=document.getElementById("rem-prio").value;
+  misc.reminders.push({id:uid(),text,date,priority,done:false});
+  persist(); document.getElementById("rem-text").value=""; document.getElementById("rem-date").value=""; renderReminders();
+}
+function toggleReminder(id){misc.reminders=misc.reminders.map(r=>r.id===id?{...r,done:!r.done}:r);persist();renderReminders();}
+function delReminder(id){misc.reminders=misc.reminders.filter(r=>r.id!==id);persist();renderReminders();}
+function renderReminders(){
+  const list=document.getElementById("rem-list"); list.innerHTML="";
+  if(!misc.reminders.length){list.innerHTML='<div class="empty">Nenhum lembrete cadastrado.</div>';return;}
+  [...misc.reminders].sort((a,b)=>{const o={urgent:0,high:1,medium:2,low:3,info:4};return(o[a.priority]??5)-(o[b.priority]??5);}).forEach(r=>{
+    const p=PMAP[r.priority]||PMAP.high;
+    const overdue=r.date&&new Date(r.date+"T12:00:00")<new Date()&&!r.done;
+    const d=document.createElement("div");
+    d.style.cssText=`display:flex;align-items:center;gap:10px;padding:12px 16px;background:${r.done?"#F7F9FC":overdue?"#FFF5F5":p.bg};border:1px solid ${overdue?"#FC8181":r.done?"#D1DCF0":p.border};border-left:4px solid ${r.done?"#CBD5E0":p.color};border-radius:10px;opacity:${r.done?0.55:1};margin-bottom:8px;flex-wrap:wrap;`;
+    d.innerHTML=`<input type="checkbox" ${r.done?"checked":""} style="width:16px;height:16px;cursor:pointer;accent-color:${p.color};" onchange="toggleReminder('${r.id}')"/>
+      <span style="flex:1;font-size:13px;color:#2D3748;text-decoration:${r.done?"line-through":"none"};font-weight:500;">${esc(r.text)}</span>
+      ${r.date?`<span style="font-size:11px;color:${overdue?"#E53E3E":"#6B84B0"};font-weight:600;">${new Date(r.date+"T12:00:00").toLocaleDateString("pt-BR")}${overdue?" ⚠️":""}</span>`:""}
+      <span style="font-size:10px;color:${p.color};font-weight:700;padding:2px 6px;background:${p.bg};border:1px solid ${p.border};border-radius:8px;">${p.label}</span>
+      <button onclick="delReminder('${r.id}')" style="background:none;border:none;color:#FC8181;font-size:16px;cursor:pointer;line-height:1;">×</button>`;
+    list.appendChild(d);
+  });
+}
+
+// ── PRODUCTIVITY ──────────────────────────────────────────────────────────
+function changeMonth(delta){
+  prodMonth+=delta;
+  if(prodMonth>11){prodMonth=0;prodYear++;}
+  if(prodMonth<0){prodMonth=11;prodYear--;}
+  renderProductivity();
+}
+function renderProductivity(){
+  document.getElementById("prod-month-label").textContent=MONTHS_PT[prodMonth]+" "+prodYear;
+  renderProdMonthCard();
+  renderProdCal();
+  renderProdTable();
+}
+function renderProdMonthCard(){
+  const s=statsForMonth(prodYear,prodMonth);
+  const c=pctColor(s.pct);
+  const el=document.getElementById("prod-month-card");
+  el.innerHTML=`<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+    <div style="flex:1;min-width:180px;">
+      <div style="color:#6B84B0;font-size:12px;font-weight:600;margin-bottom:4px;">PRODUTIVIDADE DO MÊS</div>
+      <div style="font-size:36px;font-weight:800;color:${c};">${s.pct!==null?s.pct+"%":"—"}</div>
+      <div style="color:#6B84B0;font-size:13px;">${s.done} de ${s.total} atividades concluídas</div>
+    </div>
+    <div style="flex:1;min-width:180px;">
+      ${s.total>0?`
+      <div style="height:14px;background:#EDF2F7;border-radius:20px;overflow:hidden;margin-bottom:8px;">
+        <div style="width:${s.pct}%;height:100%;background:${c};border-radius:20px;"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:#38A169;font-weight:600;">${s.done} Concluídas</span>
+        <span style="font-size:12px;color:#DD6B20;font-weight:600;">${s.total-s.done} Pendentes</span>
+      </div>`:"<div style='color:#94A8CC;font-size:13px;'>Nenhuma atividade registrada neste mês.</div>"}
+    </div>
+  </div>`;
+}
+function renderProdCal(){
+  const el=document.getElementById("prod-cal-card");
+  const first=new Date(prodYear,prodMonth,1);
+  const last=new Date(prodYear,prodMonth+1,0);
+  const today=todayISO();
+  let html=`<div style="font-weight:700;color:#1B4F8A;font-size:14px;margin-bottom:14px;">📅 Mapa de Produtividade Diária</div>
+  <div class="cal-week-hdr">`;
+  ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].forEach(d=>html+=`<span>${d}</span>`);
+  html+=`</div><div class="cal-grid">`;
+  for(let i=0;i<first.getDay();i++) html+=`<div></div>`;
+  for(let d=1;d<=last.getDate();d++){
+    const iso=`${prodYear}-${String(prodMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const s=statsForDate(iso);
+    const isT=iso===today;
+    const bg=s.total>0?pctBg(s.pct):"#F7FAFC";
+    const border=isT?"2px solid #1B4F8A":`1px solid ${s.total>0?"transparent":"#EDF2F7"}`;
+    html+=`<div class="cal-day${isT?" today":""}" style="background:${bg};border:${border};">
+      <div class="cd-num">${d}</div>
+      ${s.total>0?`<div class="cd-pct" style="color:${pctColor(s.pct)};">${s.pct}%</div><div class="cd-sub">${s.done}/${s.total}</div>`:""}
+    </div>`;
+  }
+  html+=`</div>
+  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center;">
+    <span style="font-size:11px;color:#6B84B0;font-weight:600;">Legenda:</span>
+    <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:#C6F6D5;color:#38A169;font-weight:700;">≥ 80% ✅</span>
+    <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:#FEFCBF;color:#D69E2E;font-weight:700;">50–79% 🟡</span>
+    <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:#FED7D7;color:#E53E3E;font-weight:700;">< 50% 🔴</span>
+    <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:#F7FAFC;color:#6B84B0;font-weight:700;">Sem dados</span>
+  </div>`;
+  el.innerHTML=html;
+}
+function renderProdTable(){
+  const first=new Date(prodYear,prodMonth,1);
+  const last=new Date(prodYear,prodMonth+1,0);
+  const today=todayISO();
+  const rows=[];
+  for(let d=1;d<=last.getDate();d++){
+    const iso=`${prodYear}-${String(prodMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const s=statsForDate(iso);
+    if(s.total>0) rows.push({iso,d:new Date(iso+"T12:00:00"),s});
+  }
+  const el=document.getElementById("prod-table-card");
+  if(!rows.length){el.style.display="none";return;}
+  el.style.display="block";
+  const allTksForMonth=rows.flatMap(r=>allTasks[r.iso]||[]);
+  const overdueRows=rows.map(r=>({...r,ov:(allTasks[r.iso]||[]).filter(t=>taskStatus(t)==="overdue").length}));
+  let html=`<div style="font-weight:700;color:#1B4F8A;font-size:14px;margin-bottom:14px;">📋 Detalhamento por Dia</div>
+  <div style="overflow-x:auto;"><table class="dt"><thead><tr>
+    <th>Data</th><th>Total</th><th>Concluídas</th><th>Pendentes</th><th>Em Atraso</th><th>Produtividade</th>
+  </tr></thead><tbody>`;
+  overdueRows.forEach(({iso,d,s,ov})=>{
+    const isT=iso===today;
+    const c=pctColor(s.pct);
+    html+=`<tr style="background:${isT?"#EBF8FF":"#fff"}">
+      <td style="font-weight:${isT?700:400};color:${isT?"#1B4F8A":"#2D3748"};">${d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"})}${isT?`<span style="margin-left:6px;font-size:9px;background:#1B4F8A;color:#fff;padding:1px 5px;border-radius:6px;">HOJE</span>`:""}</td>
+      <td style="font-weight:700;color:#1B4F8A;">${s.total}</td>
+      <td style="color:#38A169;font-weight:600;">${s.done}</td>
+      <td style="color:#DD6B20;">${s.total-s.done}</td>
+      <td style="color:${ov>0?"#E53E3E":"#6B84B0"};font-weight:${ov>0?700:400};">${ov>0?"⚠️ "+ov:"-"}</td>
+      <td><div style="display:flex;align-items:center;gap:8px;">
+        <div class="mini-bar-bg"><div class="mini-bar" style="width:${s.pct}%;background:${c};"></div></div>
+        <span style="font-weight:700;color:${c};min-width:36px;">${s.pct}%</span>
+      </div></td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  el.innerHTML=html;
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function esc(s){ const d=document.createElement("div");d.appendChild(document.createTextNode(s));return d.innerHTML; }
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
